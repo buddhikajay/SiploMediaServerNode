@@ -162,7 +162,7 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, ws, ca
                     });
                     var recorderParams = {
                         mediaProfile: 'MP4',
-                        uri : "file:///tmp/siplo_media_server_test"+new Date().toISOString()+".mp4"
+                        uri : "file:///home/buddhikajay/Desktop/siplo_media/siplo_media_server_test"+new Date().toISOString()+".mp4"
                     };
                     pipeline.create('RecorderEndpoint', recorderParams, function(error, recorderEndpoint){
                         if(error){
