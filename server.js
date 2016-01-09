@@ -233,13 +233,21 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, ws, ca
                                                                 pipeline.release();
                                                                 return callback(error);
                                                             }
-                                                            callerWebRtcEndpoint.on('OnIceGatheringDone', function(error) {
-                                                                recorderEndpoint.record();
-                                                                console.log("recording started");
-                                                            });
-                                                            calleeWebRtcEndpoint.on('OnIceGatheringDone', function(error) {
-                                                                recorderEndpoint.record();
-                                                                console.log("recording started");
+                                                            //callerWebRtcEndpoint.on('OnIceGatheringDone', function(error) {
+                                                            //    recorderEndpoint.record();
+                                                            //    console.log("recording started");
+                                                            //});
+                                                            //calleeWebRtcEndpoint.on('OnIceGatheringDone', function(error) {
+                                                            //    recorderEndpoint.record();
+                                                            //    console.log("recording started");
+                                                            //});
+                                                            recorderEndpoint.record(function(error){
+                                                                if(error){
+                                                                    console.log("error in recording");
+                                                                    pipeline.release();
+                                                                    return callback(error);
+                                                                }
+                                                                console.log("recording started successfully");
                                                             });
                                                         });
 
