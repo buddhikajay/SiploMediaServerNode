@@ -233,14 +233,14 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, ws, ca
                                                                 pipeline.release();
                                                                 return callback(error);
                                                             }
-                                                            //recorderEndpoint.record(function(error){
-                                                            //    if(error){
-                                                            //        console.log("error in recording");
-                                                            //        pipeline.release();
-                                                            //        return callback(error);
-                                                            //    }
-                                                            //    console.log("recording started successfully");
-                                                            //});
+                                                            recorderEndpoint.record(function(error){
+                                                                if(error){
+                                                                    console.log("error in recording");
+                                                                    pipeline.release();
+                                                                    return callback(error);
+                                                                }
+                                                                console.log("recording started successfully");
+                                                            });
                                                         });
 
                                                         self.pipeline = pipeline;
