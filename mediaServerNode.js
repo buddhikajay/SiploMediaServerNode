@@ -122,6 +122,7 @@ UserRegistry.prototype.register = function(user) {
 
 UserRegistry.prototype.unregister = function(id) {
     var user = this.getById(id);
+    user.notifyStateChangeToPartner('offline');
     if (user) delete this.usersById[id]
     if (user && this.getByName(user.name)) delete this.usersByName[user.name];
 }
