@@ -21,6 +21,17 @@ var url = require('url');
 var kurento = require('kurento-client');
 var fs    = require('fs');
 var https = require('https');
+var mongoClient = require('mongodb').MongoClient;
+var dbUrl =  'mongodb://localhost:27017/siplodb2';
+var mysql = require("mysql");
+var mysqlConnection = mysql.createConnection({
+    host     : 'localhost',
+    user     : 'root',
+    password : null,
+    database : 'siplo_e_learning'
+});
+
+var sessionLogger = new SiploSessionLogger();
 
 var argv = minimist(process.argv.slice(2), {
   default: {
@@ -46,6 +57,8 @@ var userRegistry = new UserRegistry();
 var pipelines = {};
 var candidatesQueue = {};
 var idCounter = 0;
+var siploSessionId= {};
+var siploSessionLogId = {};
 
 function nextUniqueId() {
     idCounter++;
@@ -100,6 +113,29 @@ UserRegistry.prototype.removeById = function(id) {
     if (!userSession) return;
     delete this.usersById[id];
     delete this.usersByName[userSession.name];
+}
+
+//to convert javascritp date time to mysql dateTime format
+//function twoDigits(d) {
+//    if(0 <= d && d < 10) return "0" + d.toString();
+//    if(-10 < d && d < 0) return "-0" + (-1*d).toString();
+//    return d.toString();
+//}
+//
+//Date.prototype.toMysqlFormat = function() {
+//    return this.getUTCFullYear() + "-" + twoDigits(1 + this.getUTCMonth()) + "-" + twoDigits(this.getUTCDate()) + " " + twoDigits(this.getHours()) + ":" + twoDigits(this.getUTCMinutes()) + ":" + twoDigits(this.getUTCSeconds());
+//};
+
+function SiploSessionLogger(id){
+    this.sessionId = id;
+    this.sessionLogId = {};
+}
+
+SiploSessionLogger.prototype.logStartTime = function (){
+
+}
+SiploSessionLogger.prototype.logEndTime = function(){
+
 }
 
 // Represents a B2B active call
@@ -233,14 +269,67 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, ws, ca
                                                                 pipeline.release();
                                                                 return callback(error);
                                                             }
-                                                            recorderEndpoint.record(function(error){
+
+                                                            mysqlConnection.connect(function(error){
                                                                 if(error){
-                                                                    console.log("error in recording");
+                                                                    console.log("error in mysql connection");
                                                                     pipeline.release();
                                                                     return callback(error);
                                                                 }
-                                                                console.log("recording started successfully");
+                                                                console.log('connected to database');
+                                                                mysqlConnection.query('INSERT INTO `siplo_session_log` ( `session_id`, `startedAt` ) VALUES ('+'1,'+mysqlConnection.escape(new Date())+' ) ', function (error, results, fields) {
+                                                                    // error will be an Error if one occurred during the query
+                                                                    // results will contain the results of the query
+                                                                    // fields will contain information about the returned results fields (if any)
+                                                                    siploSessionLogId = results.insertId;
+                                                                    console.log("mysql siploSessionLogId"+siploSessionLogId);
+                                                                    mysqlConnection.end(function(error){
+                                                                        if(error){
+                                                                            console.log("error in mysql connection termination");
+                                                                        }
+                                                                        else {
+                                                                            console.log("mysql connection termination successfull "+siploSessionLogId);
+                                                                        }
+                                                                    });
+                                                                });
+
                                                             });
+                                                            //recorderEndpoint.record(function(error){
+                                                            //    if(error){
+                                                            //        console.log("error in recording");
+                                                            //        pipeline.release();
+                                                            //        return callback(error);
+                                                            //    }
+                                                            //    else {
+                                                            //        console.log("recording started successfully");
+                                                            //        //https://mongodb.github.io/node-mongodb-native/markdown-docs/insert.html
+                                                            //        mongoClient.connect(dbUrl, function(error, db){
+                                                            //            if(error){
+                                                            //                console.log("error when connecting to the database");
+                                                            //                pipeline.release();
+                                                            //                return callback(error);
+                                                            //            }
+                                                            //            else {
+                                                            //                console.log("database connection successfull");
+                                                            //                var videoRecords = db.collection('videoFiles');
+                                                            //                var document = {name:"test_name", paht:"test_path"};
+                                                            //                videoRecords.insertOne(document, {w:1}, function (error, records) {
+                                                            //                    if(error){
+                                                            //                        console.log("error while inserting to database");
+                                                            //                        pipeline.release();
+                                                            //                        return callback(error);
+                                                            //                    }
+                                                            //                    else {
+                                                            //                        console.log("database insertion successfull. Record".records[0]._id);
+                                                            //                    }
+                                                            //                });
+                                                            //            }
+                                                            //
+                                                            //            db.close();
+                                                            //
+                                                            //        });
+                                                            //    }
+                                                            //});
                                                         });
 
                                                         self.pipeline = pipeline;
@@ -316,6 +405,7 @@ wss.on('connection', function(ws) {
         switch (message.id) {
         case 'register':
             register(sessionId, message.name, message.tutoringSessionId, ws);
+            siploSessionId = message.tutoringSessionId;
             break;
 
         case 'call':
@@ -371,6 +461,31 @@ function stop(sessionId) {
     if (pipeline.recorderEndpoint){
         pipeline.recorderEndpoint.stop();
         console.log("Recording Stoped successfully");
+        //mysqlConnection.connect(function(error){
+        //    if(error){
+        //        console.log("error in mysql connection");
+        //        pipeline.release();
+        //        return callback(error);
+        //    }
+        //    console.log('connected to database');
+        //    var value = 3;
+        //    mysqlConnection.query('UPDATE `siplo_session_log` SET `endedAt` = ? WHERE id = ?',[mysqlConnection.escape(new Date()), siploSessionLogId], function (error, results, fields) {
+        //        // error will be an Error if one occurred during the query
+        //        // results will contain the results of the query
+        //        // fields will contain information about the returned results fields (if any)
+        //        siploSessionLogId = results.insertId;
+        //        console.log("mysql siploSessionLogId"+siploSessionLogId);
+        //        mysqlConnection.end(function(error){
+        //            if(error){
+        //                console.log("error in mysql connection termination");
+        //            }
+        //            else {
+        //                console.log("mysql connection termination successfull "+siploSessionLogId);
+        //            }
+        //        });
+        //    });
+        //
+        //});
     }
     delete pipelines[sessionId];
     pipeline.release();

@@ -22,7 +22,7 @@ var kurento = require('kurento-client');
 var fs    = require('fs');
 var https = require('https');
 var mongoClient = require('mongodb').MongoClient;
-var dbUrl =  'mongodb://localhost:27017/siplodb';
+var dbUrl =  'mongodb://localhost:27017/siplodb2';
 
 var argv = minimist(process.argv.slice(2), {
     default: {
@@ -242,27 +242,7 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, ws, ca
                                                                    return callback(error);
                                                                }
                                                                 else {
-                                                                   mongoClient.connect(dbUrl, function(error, db){
-                                                                       if(error){
-                                                                           console.log("error when connecting to the database");
-                                                                           return error;
-                                                                       }
-                                                                       else {
-                                                                           console.log("database connection successfull");
-                                                                           videosRecords = db.collection('videoFiles');
-                                                                           videosRecords.insertOne({"id":1, "path" : "test"}, {w:1}, function (error) {
-                                                                               if(error){
-                                                                                   console.log("error while inserting to database");
-                                                                               }
-                                                                               else {
-                                                                                   console.log("database insertion successfull");
-                                                                               }
-                                                                           });
-                                                                       }
 
-                                                                       db.close();
-
-                                                                   });
                                                                }
                                                             });
                                                         });
