@@ -120,48 +120,53 @@ UserRegistry.prototype.removeById = function(id) {
     delete this.usersByName[userSession.name];
 }
 
-//to convert javascritp date time to mysql dateTime format
-//function twoDigits(d) {
-//    if(0 <= d && d < 10) return "0" + d.toString();
-//    if(-10 < d && d < 0) return "-0" + (-1*d).toString();
-//    return d.toString();
-//}
-//
-//Date.prototype.toMysqlFormat = function() {
-//    return this.getUTCFullYear() + "-" + twoDigits(1 + this.getUTCMonth()) + "-" + twoDigits(this.getUTCDate()) + " " + twoDigits(this.getHours()) + ":" + twoDigits(this.getUTCMinutes()) + ":" + twoDigits(this.getUTCSeconds());
-//};
+//to log session start /end times in mysql database
 
-function SiploSessionLogger(id){
-    this.sessionId = id;
+function SiploSessionLogger(tutoringSessionId){
+    this.sessionId = tutoringSessionId;
     this.sessionLogId = {};
     this.startTime = {};
 }
 
-SiploSessionLogger.prototype.logStartTime = function (callback){
 
+SiploSessionLogger.prototype.logStartTime = function (callback){
+    that = this;
     pool.getConnection(function(err, connection) {
 
-        connection.query('INSERT INTO `siplo_session_log` ( `session_id`, `startedAt` ) VALUES ('+'1,'+mysqlConnection.escape(new Date())+' ) ', function (error, results, fields) {
-            this.sessionLogId = results.insertId;
-            that = this;
-            console.log("mysql siploSessionLogId"+this.sessionLogId);
+        connection.query('INSERT INTO `siplo_session_log` ( `session_id`, `startedAt` ) VALUES ('+'1,'+connection.escape(new Date())+' ) ', function (error, results, fields) {
+            that.sessionLogId = results.insertId;
+            console.log("Inserted to mysql : LogId : "+that.sessionLogId +" SessionId : " + that.sessionId);
 
         });
         connection.release();
     });
 }
-SiploSessionLogger.prototype.logEndTime = function(callback){
-
+SiploSessionLogger.prototype.logEndTime = function (callback){
+    that = this;
     pool.getConnection(function(err, connection) {
+
+        connection.query('UPDATE `siplo_session_log` SET `endedAt` = ? WHERE id = ?',[new Date(), that.sessionLogId], function (error, results, fields) {
+            console.log("Updated mysql LogId2 : "+that.sessionLogId+", SessionId : " + that.sessionId);
+
+        });
+        //connection.query('INSERT INTO `siplo_session_log` ( `session_id`, `startedAt` ) VALUES ('+'1,'+connection.escape(new Date())+' ) ', function (error, results, fields) {
+        //    console.log("Inserted to mysql : LogId2 : "+that.sessionLogId +" SessionId : " + that.sessionId);
+        //
+        //});
+        connection.release();
+    });
+}
+SiploSessionLogger.prototype.logEndTime1 = function(callback){
+    that = this;
+    pool.getConnection(function(error, connection) {
 
         if(error){
             return callback(error);
         }
 
-        connection.query('UPDATE `siplo_session_log` SET `endedAt` = ? WHERE id = ?',[mysqlConnection.escape(new Date()), 8], function (error, results, fields) {
-            this.sessionLogId = results.insertId;
+        connection.query('UPDATE `siplo_session_log` SET `endedAt` = ? WHERE id = ?',[connection.escape(new Date()), 20], function (error, results, fields) {
             that = this;
-            console.log("mysql siploSessionLogId"+this.sessionLogId);
+            console.log("Updated mysql LogId : "+that.sessionLogId+" SessionId : " + that.sessionId);
 
         });
         connection.release();
