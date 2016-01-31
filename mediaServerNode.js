@@ -151,25 +151,21 @@ SiploSessionLogger.prototype.logStartTime = function (callback){
     });
 }
 SiploSessionLogger.prototype.logEndTime = function(callback){
-    that = this;
-    //mysqlConnection.connect(function(error){
-    //    if(error){
-    //        console.log("error in mysql connection");
-    //        return callback(error);
-    //    }
-    //    console.log('connected to database');
-        mysqlConnection.query('UPDATE `siplo_session_log` SET `endedAt` = ? WHERE id = ?',[mysqlConnection.escape(new Date()), 8], function (error) {
-            mysqlConnection.end(function(error){
-                if(error){
-                    console.log("error in mysql connection termination");
-                }
-                else {
-                    console.log("mysql connection termination successfull ");
-                }
-            });
-        });
 
-    //});
+    pool.getConnection(function(err, connection) {
+
+        if(error){
+            return callback(error);
+        }
+
+        connection.query('UPDATE `siplo_session_log` SET `endedAt` = ? WHERE id = ?',[mysqlConnection.escape(new Date()), 8], function (error, results, fields) {
+            this.sessionLogId = results.insertId;
+            that = this;
+            console.log("mysql siploSessionLogId"+this.sessionLogId);
+
+        });
+        connection.release();
+    });
     return callback(null);
 }
 
