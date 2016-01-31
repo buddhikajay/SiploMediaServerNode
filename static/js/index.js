@@ -122,6 +122,7 @@ ws.onmessage = function(message) {
 		break;
 	case 'partnerStatus':
 		console.log('partner state change');
+		setPartnerStatus(parsedMessage.status);
 		break;
 	default:
 		console.error('Unrecognized message', parsedMessage);
@@ -130,12 +131,23 @@ ws.onmessage = function(message) {
 
 function setPartnerStatus(status){
 	if(status == 'online'){
-
+		document.getElementById("partner").innerHTML = "online";
 	}
 	else {
-
+		document.getElementById("partner").innerHTML = "offline";
 	}
+	console.log(status);
 }
+
+//function checkPartnerStatus(){
+//	var message = {
+//		id : 'partnerStatus',
+//		name : name,
+//		tutoringSessionId : 1,
+//		partnerName: 'b'
+//	};
+//	sendMessage(message);
+//}
 
 function resgisterResponse(message) {
 	if (message.response == 'accepted') {
@@ -227,8 +239,9 @@ function incomingCall(message) {
 
 function register() {
 	var name = document.getElementById('name').value;
-	if (name == '') {
-		window.alert("You must insert your user name");
+	var partnerName = document.getElementById('partnerName').value;
+	if (name == '' || partnerName == '') {
+		window.alert("You must insert your user & partner names");
 		return;
 	}
 
@@ -238,20 +251,10 @@ function register() {
 		id : 'register',
 		name : name,
 		tutoringSessionId : 1,
-		partnerName: 'b'
+		partnerName: partnerName
 	};
 	sendMessage(message);
 	document.getElementById('peer').focus();
-}
-
-function checkPartnerStatus(){
-	var message = {
-		id : 'partnerStatus',
-		name : name,
-		tutoringSessionId : 1,
-		partnerName: 'b'
-	};
-	sendMessage(message);
 }
 
 function call() {

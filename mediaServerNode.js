@@ -89,10 +89,12 @@ UserSession.prototype.sendMessage = function(message) {
     this.ws.send(JSON.stringify(message));
 }
 UserSession.prototype.notifyStateChangeToPartner = function(state){
-    userRegistry.getByName(this.partnerName).ws.send(JSON.stringify({
-        id : 'partnerStatus',
-        status: state
-    }));
+    if(userRegistry.getByName(this.partnerName)){
+        userRegistry.getByName(this.partnerName).ws.send(JSON.stringify({
+            id : 'partnerStatus',
+            status: state
+        }));
+    }
 }
 
 UserSession.prototype.getPartnerStatus = function(){
@@ -632,6 +634,7 @@ function register(id, name, partnerName, tutoringSessionId, ws, callback) {
     }
 //    send partner status
     userRegistry.getByName(name).getPartnerStatus();
+    userRegistry.getByName(name).notifyStateChangeToPartner('online');
     //if(userRegistry.getByName(partnerName)){
     //    userRegistry.getByName(partnerName).ws.send(JSON.stringify({
     //        id : 'partnerStatus'
