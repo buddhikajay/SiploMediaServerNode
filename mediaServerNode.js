@@ -30,8 +30,15 @@ var mysqlConnection = mysql.createConnection({
     password : null,
     database : 'siplo_e_learning'
 });
+var pool  = mysql.createPool({
+    connectionLimit : 10,
+    host     : 'localhost',
+    user     : 'root',
+    password : null,
+    database : 'siplo_e_learning'
+});
 
-var sessionLogger = new SiploSessionLogger();
+var sessionLogger = {};
 
 var argv = minimist(process.argv.slice(2), {
   default: {
@@ -57,8 +64,6 @@ var userRegistry = new UserRegistry();
 var pipelines = {};
 var candidatesQueue = {};
 var idCounter = 0;
-var siploSessionId= {};
-var siploSessionLogId = {};
 
 function nextUniqueId() {
     idCounter++;
@@ -129,13 +134,43 @@ UserRegistry.prototype.removeById = function(id) {
 function SiploSessionLogger(id){
     this.sessionId = id;
     this.sessionLogId = {};
+    this.startTime = {};
 }
 
-SiploSessionLogger.prototype.logStartTime = function (){
+SiploSessionLogger.prototype.logStartTime = function (callback){
 
+    pool.getConnection(function(err, connection) {
+
+        connection.query('INSERT INTO `siplo_session_log` ( `session_id`, `startedAt` ) VALUES ('+'1,'+mysqlConnection.escape(new Date())+' ) ', function (error, results, fields) {
+            this.sessionLogId = results.insertId;
+            that = this;
+            console.log("mysql siploSessionLogId"+this.sessionLogId);
+
+        });
+        connection.release();
+    });
 }
-SiploSessionLogger.prototype.logEndTime = function(){
+SiploSessionLogger.prototype.logEndTime = function(callback){
+    that = this;
+    //mysqlConnection.connect(function(error){
+    //    if(error){
+    //        console.log("error in mysql connection");
+    //        return callback(error);
+    //    }
+    //    console.log('connected to database');
+        mysqlConnection.query('UPDATE `siplo_session_log` SET `endedAt` = ? WHERE id = ?',[mysqlConnection.escape(new Date()), 8], function (error) {
+            mysqlConnection.end(function(error){
+                if(error){
+                    console.log("error in mysql connection termination");
+                }
+                else {
+                    console.log("mysql connection termination successfull ");
+                }
+            });
+        });
 
+    //});
+    return callback(null);
 }
 
 // Represents a B2B active call
@@ -270,29 +305,12 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, ws, ca
                                                                 return callback(error);
                                                             }
 
-                                                            mysqlConnection.connect(function(error){
+                                                            sessionLogger.logStartTime(function(error){
                                                                 if(error){
-                                                                    console.log("error in mysql connection");
-                                                                    pipeline.release();
-                                                                    return callback(error);
-                                                                }
-                                                                console.log('connected to database');
-                                                                mysqlConnection.query('INSERT INTO `siplo_session_log` ( `session_id`, `startedAt` ) VALUES ('+'1,'+mysqlConnection.escape(new Date())+' ) ', function (error, results, fields) {
-                                                                    // error will be an Error if one occurred during the query
-                                                                    // results will contain the results of the query
-                                                                    // fields will contain information about the returned results fields (if any)
-                                                                    siploSessionLogId = results.insertId;
-                                                                    console.log("mysql siploSessionLogId"+siploSessionLogId);
-                                                                    mysqlConnection.end(function(error){
-                                                                        if(error){
-                                                                            console.log("error in mysql connection termination");
+                                                                            console.log("error in mysql");
+                                                                            pipeline.release();
+                                                                            return callback(error);
                                                                         }
-                                                                        else {
-                                                                            console.log("mysql connection termination successfull "+siploSessionLogId);
-                                                                        }
-                                                                    });
-                                                                });
-
                                                             });
                                                             //recorderEndpoint.record(function(error){
                                                             //    if(error){
@@ -405,7 +423,8 @@ wss.on('connection', function(ws) {
         switch (message.id) {
         case 'register':
             register(sessionId, message.name, message.tutoringSessionId, ws);
-            siploSessionId = message.tutoringSessionId;
+            //to insesrt the session start time in mysql
+            sessionLogger = new SiploSessionLogger(message.tutoringSessionId);
             break;
 
         case 'call':
@@ -461,31 +480,7 @@ function stop(sessionId) {
     if (pipeline.recorderEndpoint){
         pipeline.recorderEndpoint.stop();
         console.log("Recording Stoped successfully");
-        //mysqlConnection.connect(function(error){
-        //    if(error){
-        //        console.log("error in mysql connection");
-        //        pipeline.release();
-        //        return callback(error);
-        //    }
-        //    console.log('connected to database');
-        //    var value = 3;
-        //    mysqlConnection.query('UPDATE `siplo_session_log` SET `endedAt` = ? WHERE id = ?',[mysqlConnection.escape(new Date()), siploSessionLogId], function (error, results, fields) {
-        //        // error will be an Error if one occurred during the query
-        //        // results will contain the results of the query
-        //        // fields will contain information about the returned results fields (if any)
-        //        siploSessionLogId = results.insertId;
-        //        console.log("mysql siploSessionLogId"+siploSessionLogId);
-        //        mysqlConnection.end(function(error){
-        //            if(error){
-        //                console.log("error in mysql connection termination");
-        //            }
-        //            else {
-        //                console.log("mysql connection termination successfull "+siploSessionLogId);
-        //            }
-        //        });
-        //    });
-        //
-        //});
+
     }
     delete pipelines[sessionId];
     pipeline.release();
@@ -504,6 +499,11 @@ function stop(sessionId) {
     }
 
     clearCandidatesQueue(sessionId);
+    sessionLogger.logEndTime(function(error){
+        if(error){
+            console.log("mysql error in logiing end time")
+        }
+    });
 }
 
 function incomingCallResponse(calleeId, from, callResponse, calleeSdp, ws) {
