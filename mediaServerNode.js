@@ -75,9 +75,10 @@ function nextUniqueId() {
  */
 
 // Represents caller and callee sessions
-function UserSession(id, name, tutoringSessionId, ws) {
+function UserSession(id, name, partnerName, tutoringSessionId, ws) {
     this.id = id;
     this.name = name;
+    this.partnerName = partnerName;
     this.ws = ws;
     this.peer = null;
     this.sdpOffer = null;
@@ -87,6 +88,24 @@ function UserSession(id, name, tutoringSessionId, ws) {
 UserSession.prototype.sendMessage = function(message) {
     this.ws.send(JSON.stringify(message));
 }
+UserSession.prototype.notifyStateChangeToPartner = function(state){
+    userRegistry.getByName(this.partnerName).ws.send(JSON.stringify({
+        id : 'partnerStatus',
+        status: state
+    }));
+}
+
+UserSession.prototype.getPartnerStatus = function(){
+    var status = 'offline';
+    if(userRegistry.getByName(this.partnerName)){
+        status = 'online';
+    }
+    this.ws.send(JSON.stringify({
+        id : 'partnerStatus',
+        status: status
+    }));
+}
+
 
 // Represents registrar of users
 function UserRegistry() {
@@ -149,30 +168,10 @@ SiploSessionLogger.prototype.logEndTime = function (callback){
             console.log("Updated mysql LogId2 : "+that.sessionLogId+", SessionId : " + that.sessionId);
 
         });
-        //connection.query('INSERT INTO `siplo_session_log` ( `session_id`, `startedAt` ) VALUES ('+'1,'+connection.escape(new Date())+' ) ', function (error, results, fields) {
-        //    console.log("Inserted to mysql : LogId2 : "+that.sessionLogId +" SessionId : " + that.sessionId);
-        //
-        //});
         connection.release();
     });
 }
-SiploSessionLogger.prototype.logEndTime1 = function(callback){
-    that = this;
-    pool.getConnection(function(error, connection) {
 
-        if(error){
-            return callback(error);
-        }
-
-        connection.query('UPDATE `siplo_session_log` SET `endedAt` = ? WHERE id = ?',[connection.escape(new Date()), 20], function (error, results, fields) {
-            that = this;
-            console.log("Updated mysql LogId : "+that.sessionLogId+" SessionId : " + that.sessionId);
-
-        });
-        connection.release();
-    });
-    return callback(null);
-}
 
 // Represents a B2B active call
 function CallMediaPipeline() {
@@ -306,6 +305,8 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, ws, ca
                                                                 return callback(error);
                                                             }
 
+                                                            //to insesrt the session start time in mysql
+                                                            sessionLogger = new SiploSessionLogger(userRegistry.getById(calleeId).tutoringSessionId);
                                                             sessionLogger.logStartTime(function(error){
                                                                 if(error){
                                                                             console.log("error in mysql");
@@ -423,9 +424,7 @@ wss.on('connection', function(ws) {
 
         switch (message.id) {
         case 'register':
-            register(sessionId, message.name, message.tutoringSessionId, ws);
-            //to insesrt the session start time in mysql
-            sessionLogger = new SiploSessionLogger(message.tutoringSessionId);
+            register(sessionId, message.name, message.partnerName, message.tutoringSessionId, ws);
             break;
 
         case 'call':
@@ -442,6 +441,10 @@ wss.on('connection', function(ws) {
 
         case 'onIceCandidate':
             onIceCandidate(sessionId, message.candidate);
+            break;
+        //    this was added to make this switch statement similar to front end. Actually used in front end
+        case 'partnerStatus':
+            console.log('partner state change');
             break;
 
         default:
@@ -608,7 +611,7 @@ function call(callerId, to, from, sdpOffer) {
     caller.sendMessage(message);
 }
 
-function register(id, name, tutoringSessionId, ws, callback) {
+function register(id, name, partnerName, tutoringSessionId, ws, callback) {
     function onError(error) {
         ws.send(JSON.stringify({id:'registerResponse', response : 'rejected ', message: error}));
     }
@@ -621,12 +624,19 @@ function register(id, name, tutoringSessionId, ws, callback) {
         return onError("User " + name + " is already registered");
     }
 
-    userRegistry.register(new UserSession(id, name, tutoringSessionId, ws));
+    userRegistry.register(new UserSession(id, name, partnerName, tutoringSessionId, ws));
     try {
         ws.send(JSON.stringify({id: 'registerResponse', response: 'accepted'}));
     } catch(exception) {
         onError(exception);
     }
+//    send partner status
+    userRegistry.getByName(name).getPartnerStatus();
+    //if(userRegistry.getByName(partnerName)){
+    //    userRegistry.getByName(partnerName).ws.send(JSON.stringify({
+    //        id : 'partnerStatus'
+    //    }));
+    //}
 }
 
 function clearCandidatesQueue(sessionId) {

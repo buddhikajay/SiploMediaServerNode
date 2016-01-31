@@ -120,8 +120,20 @@ ws.onmessage = function(message) {
 	case 'iceCandidate':
 		webRtcPeer.addIceCandidate(parsedMessage.candidate)
 		break;
+	case 'partnerStatus':
+		console.log('partner state change');
+		break;
 	default:
 		console.error('Unrecognized message', parsedMessage);
+	}
+}
+
+function setPartnerStatus(status){
+	if(status == 'online'){
+
+	}
+	else {
+
 	}
 }
 
@@ -225,10 +237,21 @@ function register() {
 	var message = {
 		id : 'register',
 		name : name,
-		tutoringSessionId : 1
+		tutoringSessionId : 1,
+		partnerName: 'b'
 	};
 	sendMessage(message);
 	document.getElementById('peer').focus();
+}
+
+function checkPartnerStatus(){
+	var message = {
+		id : 'partnerStatus',
+		name : name,
+		tutoringSessionId : 1,
+		partnerName: 'b'
+	};
+	sendMessage(message);
 }
 
 function call() {
