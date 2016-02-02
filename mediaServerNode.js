@@ -21,6 +21,7 @@ var url = require('url');
 var kurento = require('kurento-client');
 var fs    = require('fs');
 var https = require('https');
+var config = require('config');
 var mongoClient = require('mongodb').MongoClient;
 var dbUrl =  'mongodb://localhost:27017/siplodb2';
 var mysql = require("mysql");
@@ -30,13 +31,8 @@ var mysqlConnection = mysql.createConnection({
     password : null,
     database : 'siplo_e_learning'
 });
-var pool  = mysql.createPool({
-    connectionLimit : 10,
-    host     : 'localhost',
-    user     : 'root',
-    password : null,
-    database : 'siplo_e_learning'
-});
+
+var pool  = mysql.createPool(config.get('mysql.pool'));
 
 var sessionLogger = {};
 
