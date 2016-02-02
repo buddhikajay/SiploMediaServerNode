@@ -7,5 +7,15 @@
       "password" : null,
       "database": "siplo_e_learning"
     }
+  },
+  "uris":{
+    "secure":{
+      "as_uri": "https://localhost:8443/",
+      "ws_uri": "ws://localhost:8888/kurento"
+    }
+  },
+  "keys":{
+    "key":"keys/server.key",
+    "crt":"keys/server.crt"
   }
 }

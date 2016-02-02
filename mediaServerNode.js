@@ -37,16 +37,13 @@ var pool  = mysql.createPool(config.get('mysql.pool'));
 var sessionLogger = {};
 
 var argv = minimist(process.argv.slice(2), {
-  default: {
-      as_uri: "https://localhost:8443/",
-      ws_uri: "ws://localhost:8888/kurento"
-  }
+  default: config.get('uris.secure')
 });
 
 var options =
 {
-  key:  fs.readFileSync('keys/server.key'),
-  cert: fs.readFileSync('keys/server.crt')
+  key:  fs.readFileSync(config.get('keys.key')),
+  cert: fs.readFileSync(config.get('keys.crt'))
 };
 
 var app = express();
