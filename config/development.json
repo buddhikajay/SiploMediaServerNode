@@ -11,11 +11,11 @@
   "uris":{
     "secure":{
       "as_uri": "https://localhost:8443/",
-      "ws_uri": "ws://siplo.xyz:8888/kurento"
+      "ws_uri": "ws://localhost:8888/kurento"
     }
   },
   "keys":{
-    "key":"/etc/ssl/siplo.lk.privatekey.pem",
-    "crt":"/etc/ssl/siplo.lk.ssl-bundle.crt"
+    "key":"keys/server.key",
+    "crt":"keys/server.crt"
   }
 }
