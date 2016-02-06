@@ -1,0 +1,21 @@
+{
+  "mysql":{
+    "pool":{
+      "connectionLimit" : 10,
+      "host": "localhost",
+      "user"    : "root",
+      "password" : null,
+      "database": "siplo_e_learning"
+    }
+  },
+  "uris":{
+    "secure":{
+      "as_uri": "https://localhost:8443/",
+      "ws_uri": "ws://siplo.xyz:8888/kurento"
+    }
+  },
+  "keys":{
+    "key":"/etc/ssl/siplo.lk.privatekey.pem",
+    "crt":"/etc/ssl/siplo.lk.ssl-bundle.crt"
+  }
+}
