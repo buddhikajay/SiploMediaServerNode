@@ -619,7 +619,16 @@ function register(id, name, partnerName, tutoringSessionId, ws, callback) {
     }
 
     if (userRegistry.getByName(name)) {
-        return onError("User " + name + " is already registered");
+        var user = userRegistry.getByName(name);
+        //to remove the registered user
+        user.sendMessage({
+            id: 'stopCommunication',
+            message: 'self unregistering'
+        });
+        userRegistry.unregister(user.id);
+        //in older code
+        //return onError("User " + name + " is already registered");
+        //return onError("User " + name + " reregistered");
     }
 
     userRegistry.register(new UserSession(id, name, partnerName, tutoringSessionId, ws));
