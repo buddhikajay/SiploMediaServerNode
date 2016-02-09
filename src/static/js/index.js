@@ -240,8 +240,9 @@ function incomingCall(message) {
 function register() {
 	var name = document.getElementById('name').value;
 	var partnerName = document.getElementById('partnerName').value;
-	if (name == '' || partnerName == '') {
-		window.alert("You must insert your user & partner names");
+	var tutoringSessionId  = document.getElementById('tutoringSessionId').value;
+	if (name == '' || partnerName == '' || tutoringSessionId == '') {
+		window.alert("You must insert your user & partner names & tutoring session id");
 		return;
 	}
 
@@ -250,7 +251,7 @@ function register() {
 	var message = {
 		id : 'register',
 		name : name,
-		tutoringSessionId : 1,
+		tutoringSessionId : tutoringSessionId,
 		partnerName: partnerName
 	};
 	sendMessage(message);

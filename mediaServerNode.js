@@ -150,7 +150,13 @@ SiploSessionLogger.prototype.logStartTime = function (callback){
     that = this;
     pool.getConnection(function(err, connection) {
 
-        connection.query('INSERT INTO `siplo_session_log` ( `session_id`, `startedAt` ) VALUES ('+'1,'+connection.escape(new Date())+' ) ', function (error, results, fields) {
+        var query = 'INSERT INTO `siplo_session_log` ( `session_id`, `startedAt` ) VALUES ('+that.sessionId+','+connection.escape(new Date())+' ) ';
+        console.log(query);
+        connection.query(query, function (error, results, fields) {
+
+            if (error) {
+                console.error('err from callback: ' + error.stack);
+            }
             that.sessionLogId = results.insertId;
             console.log("Inserted to mysql : LogId : "+that.sessionLogId +" SessionId : " + that.sessionId);
 
