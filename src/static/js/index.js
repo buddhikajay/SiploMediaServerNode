@@ -227,6 +227,17 @@ function incomingCall(message) {
 			localVideo : videoInput,
 			remoteVideo : videoOutput,
 			onicecandidate : onIceCandidate
+			,mediaConstraints : {
+				audio : true,
+				video : {
+					mandatory : {
+						maxWidth : 320,
+						maxHeight : 400,
+						maxFrameRate : 15,
+						minFrameRate : 15
+					}
+				}
+			}
 		}
 
 		webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,

@@ -112,3 +112,4 @@ Before asking for support, please read first the [Kurento Netiquette Guidelines]
 [Open API specification]: http://kurento.github.io/doc-kurento/
 [apiary.io]: http://docs.streamoriented.apiary.io/
 [instructions]: http://www.kurento.org/docs/current/tutorials/node/tutorial-one2one.html
+[change resolution]: https://groups.google.com/forum/#!topic/kurento/y7emf5xw784

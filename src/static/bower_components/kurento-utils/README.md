@@ -142,3 +142,4 @@ Before asking for support, please read first the [Kurento Netiquette Guidelines]
 [readthedocs.org]: http://kurento.readthedocs.org/
 [Open API specification]: http://kurento.github.io/doc-kurento/
 [apiary.io]: http://docs.streamoriented.apiary.io/
+[resolution]: https://groups.google.com/forum/#!msg/kurento/y7emf5xw784/pB7r8hssrHcJ
