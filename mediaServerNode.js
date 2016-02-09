@@ -101,6 +101,14 @@ UserSession.prototype.getPartnerStatus = function(){
 }
 
 
+//this was implemented later
+UserSession.prototype.sendToPartner = function(message){
+    if(userRegistry.getByName(this.partnerName)){
+        userRegistry.getByName(this.partnerName).ws.send(JSON.stringify(message));
+    }
+}
+
+
 // Represents registrar of users
 function UserRegistry() {
     this.usersById = {};
@@ -460,6 +468,11 @@ wss.on('connection', function(ws) {
         case 'partnerStatus':
             console.log('get partner status');
             userRegistry.getById(sessionId).getPartnerStatus();
+            break;
+
+        case 'heartbeat':
+            console.log('received heartbeat of '+sessionId);
+            userRegistry.getById(sessionId).sendToPartner(message);
             break;
 
         default:

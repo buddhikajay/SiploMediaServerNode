@@ -90,8 +90,8 @@ window.onload = function() {
 	document.getElementById('terminate').addEventListener('click', function() {
 		stop();
 	});
-	document.getElementById('checkStatus').addEventListener('click', function() {
-		checkPartnerStatus();
+	document.getElementById('checkHeartbeat').addEventListener('click', function() {
+		checkPartnerHeartbeat();
 	});
 }
 
@@ -127,9 +127,41 @@ ws.onmessage = function(message) {
 		console.log('partner state change');
 		setPartnerStatus(parsedMessage.status);
 		break;
+	//	partner heart beat
+	case 'heartbeat':
+		console.log('partner heart beat.. he is alive');
+		handleHeartbeat(parsedMessage.message);
+		break;
 	default:
 		console.error('Unrecognized message', parsedMessage);
 	}
+}
+
+function handleHeartbeat(message){
+	switch (message){
+		case 'alive':
+			console.log('partner alive');
+			break;
+		case 'areYouAlive':
+			sendHeartbeat();
+			break;
+	}
+}
+
+function sendHeartbeat(){
+	var message = {
+		id : 'heartbeat',
+		message: 'alive'
+	};
+	sendMessage(message);
+}
+
+function checkPartnerHeartbeat(){
+	var message = {
+		id : 'heartbeat',
+		message: 'areYouAlive'
+	};
+	sendMessage(message);
 }
 
 function setPartnerStatus(status){
@@ -142,19 +174,6 @@ function setPartnerStatus(status){
 	console.log(status);
 }
 
-function heartbeatPartnerStatusCheck() {
-	setInterval(function(){ checkPartnerStatus() }, 5000);
-}
-
-function checkPartnerStatus(){
-	var message = {
-		id : 'partnerStatus'
-		//name : name,
-		//tutoringSessionId : 1,
-		//partnerName: 'b'
-	};
-	sendMessage(message);
-}
 
 function resgisterResponse(message) {
 	if (message.response == 'accepted') {
@@ -264,7 +283,6 @@ function register() {
 	sendMessage(message);
 	document.getElementById('peer').focus();
 	console.log('set heartbeat bum');
-	heartbeatPartnerStatusCheck();
 
 }
 
