@@ -226,13 +226,13 @@ function incomingCall(message) {
 		var options = {
 			localVideo : videoInput,
 			remoteVideo : videoOutput,
-			onicecandidate : onIceCandidate
-			,mediaConstraints : {
+			onicecandidate : onIceCandidate,
+			mediaConstraints : {
 				audio : true,
 				video : {
 					mandatory : {
-						maxWidth : 320,
-						maxHeight : 400,
+						maxWidth : 32,
+						maxHeight : 40,
 						maxFrameRate : 15,
 						minFrameRate : 15
 					}
@@ -310,7 +310,18 @@ function call() {
 	var options = {
 		localVideo : videoInput,
 		remoteVideo : videoOutput,
-		onicecandidate : onIceCandidate
+		onicecandidate : onIceCandidate,
+		mediaConstraints : {
+			audio : true,
+			video : {
+				mandatory : {
+					maxWidth : 32,
+					maxHeight : 40,
+					maxFrameRate : 15,
+					minFrameRate : 15
+				}
+			}
+		}
 	}
 
 	webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(
