@@ -90,6 +90,9 @@ window.onload = function() {
 	document.getElementById('terminate').addEventListener('click', function() {
 		stop();
 	});
+	document.getElementById('checkStatus').addEventListener('click', function() {
+		checkPartnerStatus();
+	});
 }
 
 window.onbeforeunload = function() {
@@ -139,15 +142,19 @@ function setPartnerStatus(status){
 	console.log(status);
 }
 
-//function checkPartnerStatus(){
-//	var message = {
-//		id : 'partnerStatus',
-//		name : name,
-//		tutoringSessionId : 1,
-//		partnerName: 'b'
-//	};
-//	sendMessage(message);
-//}
+function heartbeatPartnerStatusCheck() {
+	setInterval(function(){ checkPartnerStatus() }, 5000);
+}
+
+function checkPartnerStatus(){
+	var message = {
+		id : 'partnerStatus'
+		//name : name,
+		//tutoringSessionId : 1,
+		//partnerName: 'b'
+	};
+	sendMessage(message);
+}
 
 function resgisterResponse(message) {
 	if (message.response == 'accepted') {
@@ -256,6 +263,9 @@ function register() {
 	};
 	sendMessage(message);
 	document.getElementById('peer').focus();
+	console.log('set heartbeat bum');
+	heartbeatPartnerStatusCheck();
+
 }
 
 function call() {

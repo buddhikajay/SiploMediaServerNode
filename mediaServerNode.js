@@ -458,7 +458,8 @@ wss.on('connection', function(ws) {
             break;
         //    this was added to make this switch statement similar to front end. Actually used in front end
         case 'partnerStatus':
-            console.log('partner state change');
+            console.log('get partner status');
+            userRegistry.getById(sessionId).getPartnerStatus();
             break;
 
         default:
