@@ -34,8 +34,6 @@ var mysqlConnection = mysql.createConnection({
 
 var pool  = mysql.createPool(config.get('mysql.pool'));
 
-var sessionLogger = {};
-
 var argv = minimist(process.argv.slice(2), {
   default: config.get('uris.secure')
 });
@@ -57,6 +55,7 @@ var userRegistry = new UserRegistry();
 var pipelines = {};
 var candidatesQueue = {};
 var idCounter = 0;
+var siploSessionRegistry = new SessionLoggerRegistry();
 
 function nextUniqueId() {
     idCounter++;
@@ -140,6 +139,7 @@ UserRegistry.prototype.removeById = function(id) {
 //to log session start /end times in mysql database
 
 function SiploSessionLogger(tutoringSessionId){
+    this.id = tutoringSessionId;
     this.sessionId = tutoringSessionId;
     this.sessionLogId = {};
     this.startTime = {};
@@ -169,7 +169,16 @@ SiploSessionLogger.prototype.logEndTime = function (callback){
         connection.release();
     });
 }
-
+//to store session loggers
+function SessionLoggerRegistry() {
+    this.sessionLoggerById = {};
+}
+SessionLoggerRegistry.prototype.register = function(tutoringSessionId){
+    this.sessionLoggerById[tutoringSessionId] = new SiploSessionLogger(tutoringSessionId);
+}
+SessionLoggerRegistry.prototype.getById = function(tutoringSessionId){
+    return this.sessionLoggerById[tutoringSessionId];
+}
 
 // Represents a B2B active call
 function CallMediaPipeline() {
@@ -304,7 +313,8 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, ws, ca
                                                             }
 
                                                             //to insesrt the session start time in mysql
-                                                            sessionLogger = new SiploSessionLogger(userRegistry.getById(calleeId).tutoringSessionId);
+                                                            siploSessionRegistry.register(userRegistry.getById(calleeId).tutoringSessionId);
+                                                            sessionLogger = siploSessionRegistry.getById(userRegistry.getById(calleeId).tutoringSessionId);
                                                             sessionLogger.logStartTime(function(error){
                                                                 if(error){
                                                                             console.log("error in mysql");
@@ -490,7 +500,7 @@ function stop(sessionId) {
     var stoppedUser = userRegistry.getByName(stopperUser.peer);
     stopperUser.peer = null;
 
-    if (stoppedUser) {
+    if (stopperUser) {
         stoppedUser.peer = null;
         delete pipelines[stoppedUser.id];
         var message = {
@@ -501,11 +511,16 @@ function stop(sessionId) {
     }
 
     clearCandidatesQueue(sessionId);
-    sessionLogger.logEndTime(function(error){
-        if(error){
-            console.log("mysql error in logiing end time")
-        }
-    });
+    var sessionLogger = siploSessionRegistry.getById(stoppedUser.tutoringSessionId);
+    if(sessionLogger){
+        sessionLogger.logEndTime(function(error){
+            if(error){
+                console.log("mysql error in logiing end time")
+            }
+        });
+        //delete sessionLogger from the sessionLoggerRegistry
+        delete siploSessionRegistry[stopperUser.tutoringSessionId];
+    }
 }
 
 function incomingCallResponse(calleeId, from, callResponse, calleeSdp, ws) {
@@ -625,6 +640,7 @@ function register(id, name, partnerName, tutoringSessionId, ws, callback) {
             id: 'stopCommunication',
             message: 'self unregistering'
         });
+        stop(user.id);
         userRegistry.unregister(user.id);
         //in older code
         //return onError("User " + name + " is already registered");
