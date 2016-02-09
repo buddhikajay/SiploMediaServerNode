@@ -231,8 +231,8 @@ function incomingCall(message) {
 				audio : true,
 				video : {
 					mandatory : {
-						maxWidth : 32,
-						maxHeight : 40,
+						maxWidth : 200,
+						maxHeight : 150,
 						maxFrameRate : 15,
 						minFrameRate : 15
 					}
@@ -315,8 +315,8 @@ function call() {
 			audio : true,
 			video : {
 				mandatory : {
-					maxWidth : 32,
-					maxHeight : 40,
+					maxWidth : 200,
+					maxHeight : 150,
 					maxFrameRate : 15,
 					minFrameRate : 15
 				}
