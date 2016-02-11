@@ -475,6 +475,10 @@ wss.on('connection', function(ws) {
             userRegistry.getById(sessionId).sendToPartner(message);
             break;
 
+        case 'siplo':
+            console.log('siplo message');
+            userRegistry.getById(sessionId).sendToPartner(message);
+
         default:
             ws.send(JSON.stringify({
                 id : 'error',
