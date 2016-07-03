@@ -452,7 +452,9 @@ wss.on('connection', function(ws) {
         case 'call':
             call(sessionId, message.to, message.from, message.sdpOffer);
             break;
-
+	case 'resume':
+            resume(sessionId,message.to,message.from,message.sdpoffer);
+            break;
         case 'incomingCallResponse':
             incomingCallResponse(sessionId, message.from, message.callResponse, message.sdpOffer, ws);
             break;
@@ -550,7 +552,7 @@ function stop(sessionId) {
 function incomingCallResponse(calleeId, from, callResponse, calleeSdp, ws) {
 
     clearCandidatesQueue(calleeId);
-
+    console.log("call response: "+callResponse);
     function onError(callerReason, calleeReason) {
         if (pipeline) pipeline.release();
         if (caller) {
@@ -574,8 +576,9 @@ function incomingCallResponse(calleeId, from, callResponse, calleeSdp, ws) {
         return onError(null, 'unknown from = ' + from);
     }
     var caller = userRegistry.getByName(from);
-
+    
     if (callResponse === 'accept') {
+	console.log("call request accepted");
         var pipeline = new CallMediaPipeline();
         pipelines[caller.id] = pipeline;
         pipelines[callee.id] = pipeline;
@@ -611,6 +614,7 @@ function incomingCallResponse(calleeId, from, callResponse, calleeSdp, ws) {
             });
         });
     } else {
+        console.log("call request rejected");
         var decline = {
             id: 'callResponse',
             response: 'rejected',
@@ -647,6 +651,34 @@ function call(callerId, to, from, sdpOffer) {
     };
     caller.sendMessage(message);
 }
+function resume(callerId, to, from, sdpOffer) {
+    clearCandidatesQueue(callerId);
+
+    var caller = userRegistry.getById(callerId);
+    var rejectCause = 'User ' + to + ' is not registered';
+    if (userRegistry.getByName(to)) {
+        var callee = userRegistry.getByName(to);
+        caller.sdpOffer = sdpOffer
+        callee.peer = from;
+        caller.peer = to;
+        var message = {
+            id: 'resumeVideo',
+            from: from
+        };
+        try{
+            return callee.sendMessage(message);
+        } catch(exception) {
+            rejectCause = "Error " + exception;
+        }
+    }
+    var message  = {
+        id: 'callResponse',
+        response: 'rejected: ',
+        message: rejectCause
+    };
+    caller.sendMessage(message);
+}
+
 
 function register(id, name, partnerName, tutoringSessionId, ws, callback) {
     function onError(error) {
